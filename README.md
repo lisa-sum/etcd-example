@@ -7,12 +7,22 @@
     ```shell
     mkdir -p /home/data/etcd/etcd.d
     ```
-4. config etcd file
+4. run default etcd server
+    ```shell
+    nohup etcd &
+    ```
+   
+OR  config etcd file
+
+1. config etcd file
     ```shell
     vi /home/data/etcd/etcd.d/etcd.conf.yml
     ```
-5. 
-
+2. run etcd server
+    ```shell
+    nohup etcd --config-file=/home/data/etcd/etcd.d/etcd.conf.yml &
+    ``` 
+   
 ## Use 
 
 ### CLI
