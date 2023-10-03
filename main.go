@@ -3,8 +3,10 @@ package main
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"github.com/spf13/viper"
+	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"log"
 	"time"
@@ -62,16 +64,40 @@ func main() {
 
 	// 创建etcd客户端连接
 	cli, err := clientv3.New(clientv3.Config{
-		Endpoints:   []string{"192.168.0.158:2379"},
-		DialTimeout: 5 * time.Second,
+		Endpoints:   []string{"192.168.0.158:2379"}, // 集群地址, 也可以是单个地址多个集群使用逗号分隔
+		DialTimeout: 5 * time.Second,                // 连接超时时间
 	})
 	if err != nil {
 		log.Fatalf("create etcd client failed: %v", err)
 	}
 	defer cli.Close()
 
-	WatchConfig(cli)
+	// PUT
+	kv, err2 := cli.Get(context.Background(), "config/data", nil)
+	// 判断错误类型
+	if err2 != nil {
+		switch {
+		case errors.Is(err, context.Canceled):
+			log.Fatalf("ctx is canceled by another routine: %v", err)
+		case errors.Is(err, context.DeadlineExceeded):
+			log.Fatalf("ctx is attached with a deadline is exceeded: %v", err)
+		case errors.Is(err, rpctypes.ErrEmptyKey):
+			log.Fatalf("client-side error: %v", err)
+		default:
+			log.Fatalf("bad cluster endpoints, which are not etcd servers: %v", err)
+		}
+	}
+	fmt.Printf("kv: %v\n", kv)
 
+	resp, err5 := cli.Get(context.Background(), "foo")
+	if err5 != nil {
+		log.Fatal(err5)
+	}
+	fmt.Printf("resp:%+v\n", resp)
+
+	// watch
+	// go WatchConfig(cli)
+	// select {}
 }
 func Init(config Config) Config {
 	// 实例化配置结构体
